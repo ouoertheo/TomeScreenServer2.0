@@ -61,10 +61,11 @@ exports.deleteUser = (req,res) => {
 }
 
 // Reset User's daily info 
-exports.clearUserDailyConfigs = async (req,res) => {
+exports.resetDailyStates = async (req,res) => {
     console.info('Wiping daily configs');
     try{
         await user.updateMany({$set: {'break.lastFreeDuration': 0, 'break.lastBreakTime': 0, "break.onBreak": false, bonusLimit:0}});
+        res.status(200).send('Wiping daily configs');
     } catch(err) {
         res.status(500).send(err.message);
     }

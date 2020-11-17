@@ -6,7 +6,7 @@ var userController = require('../controllers/user-controller');
 router.get('/', userController.listUsers);
 router.get('/:name', userController.getUser);
 router.post('/', userController.createUser);
-router.post('/clearDaily',clearUserDailyConfigs)
+router.post('/resetDailyStates',userController.resetDailyStates)
 router.patch('/:name', userController.updateUser);
 router.delete('/:name', userController.deleteUser);
 

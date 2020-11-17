@@ -7,7 +7,13 @@
 var app = require('../app');
 var debug = require('debug')('express:server');
 var http = require('http');
-var db = require('../config/db')
+var db = require('../config/db');
+var cron = require('./cron');
+
+/**
+ * Init the cron jobs.
+ */
+cron.init();
 
 /**
  * Get port from environment and store in Express.
