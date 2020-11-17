@@ -1,0 +1,17 @@
+extends layout
+
+block content
+  h1= title
+  table(class="table")
+    tr
+      th name
+      th dailyLimit
+      th bonusLimit
+      th operations
+    each value in data
+      tr
+        td= value.name
+        td= value.dailyLimit
+        td= value.bonusLimit
+        td
+          button(type="button",class="btn-sm") add
