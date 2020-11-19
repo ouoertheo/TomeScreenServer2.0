@@ -16,33 +16,17 @@ exports.poll = (req,res) => {
     })
 }
 
-exports.getToday = (req,res) => {
-    var name = req.params.name
-    name = decodeURIComponent(name)
-    //
-    // Get the user object associated with the current host. 
-    //
-    findUserQuery = user.findOne({"devices.user" : name})
-
-    //
-    // Get all the activities from today for that user
-    //
-    startOfDay = new Date(new Date().setHours(0,0,0,0))
-    endOfDay = new Date(new Date().setHours(23,59,59,999))
-
-
-    var match = {user: name, timestamp: {'$gte': startOfDay, '$lte':endOfDay}}
-    var group = {_id: '$user', used: {$sum: '$usage'}}
-    var pipeline2 = [{$match: match}, {$group: group}]
-
-    // Make the call. 
-    aggregateQueryNew = activity.aggregate(pipeline2)
-
-    // Wait for user and aggregate total. 
-    Promise.all([findUserQuery,aggregateQueryNew]).then(values => {            
-        // Get the total used time
-        usedTime = values[1][0]['used']
-
+exports.getToday = async (req,res) => {
+    try {
+        var name = req.params.name;
+        name = decodeURIComponent(name);
+        startOfDay = new Date(new Date().setHours(0,0,0,0));
+        endOfDay = new Date(new Date().setHours(23,59,59,999));
+    
+        thisUser = await user.findOne({"devices.user" : name});
+        usedTime = await activity.aggregateTotalBetween(name, startOfDay, endOfDay);
+        usedTime = usedTime.total
+    
         // Set initial response to client
         responseJson = {
             state: "N/A", 
@@ -52,7 +36,7 @@ exports.getToday = (req,res) => {
             breakTimeLeft: -1,
             freeTimeLeft: -1,
             onBreak: false
-        }
+        };
 
         //
         // Get the total alotted time. This might not be populeted if the user is not registered,
@@ -61,15 +45,13 @@ exports.getToday = (req,res) => {
         //
 
         // User Exists
-        if (values[0]){
-            thisUser = values[0]
-
+        if (thisUser){
             let totalLimit = thisUser.dailyLimit + thisUser.bonusLimit
             responseJson.total = totalLimit - usedTime
             responseJson.state = "time left"
 
             console.debug("Device is associated with user, sending time left")
-            console.debug("Queried: " + name + " | Response: " + values[0].name + " | Time used\\total: " + usedTime + "\\" + totalLimit)
+            console.debug("Queried: " + name + " | Response: " + thisUser.name + " | Time used\\total: " + usedTime + "\\" + totalLimit)
 
             //
             // Handle breaks
@@ -161,32 +143,24 @@ exports.getToday = (req,res) => {
             console.info(responseJson)
             res.send(responseJson)
         }
-
-    }).catch(err =>{
-        res.send(err)
-    })
+    } catch(err) {
+        console.error(err.message)
+        res.send(err.message)
+    }
 }
 
 exports.getDate = async (req,res) => {
-    var name = req.params.name
-    var date = req.query.date
-    let total
-    console.log(date)
-    todayQueryString = '^'+date
-
-    var match = {user: name, timestamp: RegExp(todayQueryString)}
-    var group = {_id: '$user', total: {$sum: '$usage'}}
-    var pipeline = [{$match: match}, {$group: group}]
-    
-    console.log(pipeline)
-    collection.aggregate(pipeline).toArray().then(results =>{
-        total = {total: results[0]['total']}
-        console.log(total)
+    try {
+        var name = req.params.name;
+        var dateStart =  new Date(Date.parse(req.body.date));
+        var dateEnd =  new Date(new Date(dateStart).setHours(23,59,59,0));
+        total = await activity.aggregateTotalBetween(name, dateStart, dateEnd);
         res.send(total)
+    } catch(err) {
+        console.error(err.message)
+        res.send(err.message)
     }
-    ).catch(err =>{
-        res.send(err)
-    })
+    
     
 }
 

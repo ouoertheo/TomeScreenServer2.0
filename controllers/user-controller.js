@@ -12,7 +12,7 @@ exports.createUser = async (req, res) => {
 }
 
 // Get User
-exports.getUser = (req,res) => {
+exports.getUser = async (req,res) => {
     user.findOne({name: req.params.name}).then(doc => {
         if (doc){
             res.status(200).send(doc)

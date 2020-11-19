@@ -4,7 +4,7 @@ var activityController = require('../controllers/activity-controller');
 
 /* GET users listing. */
 router.get('/getToday/:name', activityController.getToday);
-router.get('/getDate', activityController.getDate);
+router.get('/getDate/:name', activityController.getDate);
 router.post('/poll', activityController.poll);
 router.post('/clearAll', activityController.clearAll);
 
