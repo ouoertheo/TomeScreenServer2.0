@@ -1,5 +1,6 @@
 var activity = require('../models/activity')
 var user = require('../models/user')
+const activityService = require('../services/activity-service');
 var async = require('async');
 
 // Accept a poll from a client
@@ -24,7 +25,7 @@ exports.getToday = async (req,res) => {
         endOfDay = new Date(new Date().setHours(23,59,59,999));
     
         thisUser = await user.findOne({"devices.user" : name});
-        usedTime = await activity.aggregateTotalBetween(name, startOfDay, endOfDay);
+        usedTime = await activityService.aggregateTotalBetween(name, startOfDay, endOfDay);
         usedTime = usedTime.total
     
         // Set initial response to client
@@ -154,7 +155,7 @@ exports.getDate = async (req,res) => {
         var name = req.params.name;
         var dateStart =  new Date(Date.parse(req.body.date));
         var dateEnd =  new Date(new Date(dateStart).setHours(23,59,59,0));
-        total = await activity.aggregateTotalBetween(name, dateStart, dateEnd);
+        total = await activityService.aggregateTotalBetween(name, dateStart, dateEnd);
         res.send(total)
     } catch(err) {
         console.error(err.message)
@@ -164,7 +165,6 @@ exports.getDate = async (req,res) => {
     
 }
 
-// Clear all polling data
 exports.clearAll = (req,res) => {
     collection.deleteMany({}).then( result =>{
         console.log('Deleted: ' + result.deletedCount + " items.")
@@ -175,38 +175,27 @@ exports.clearAll = (req,res) => {
     })
 }
 
-// Get poll information for a user on a specific day
-// Call should look like /getDate/username?date=Y-mm-dd
-exports.getDateDebug = (req,res) => {
-    var name = req.params.name
-    var date = req.query.date
-    let total
-    console.log(date)
-    todayQueryString = '^'+date
-
-    var query = {user: name, timestamp: RegExp(todayQueryString)}
-    //var query = {user: name}
-    console.log(query)
-    collection.find(query).toArray().then(results =>{
-            res.send(results)
-        }
-    ).catch(err =>{
-        res.send(err)
-    })
-    
+exports.getDateDebug = async (req,res) => {
+    try {
+        var name = req.params.name;
+        var start =  new Date(Date.parse(req.body.date));
+        var end =  new Date(new Date(start).setHours(23,59,59,0));
+        results = await activityService.getAllActivityBetween(name,start,end);
+        res.send(results)
+    } catch(err){
+        res.send(err.message)
+        throw (err)
+    }
 }
 
-exports.getTodayDebug = (req,res) => {
-    var name = req.params.name
-    var today = new Date().toISOString().slice(0, 10)
-    todayQueryString = '^'+today
-    var query = {user: name, timestamp: RegExp(todayQueryString)}
-    //var query = {user: name}
-    console.log(query)
-    collection.find(query).toArray().then(results =>{
-            res.send(results)
-        }
-    ).catch(err =>{
-        res.send(err)
-    })
+exports.getTodayDebug = async(req,res) => {
+    try {
+        var name = req.params.name;
+        start = new Date(new Date().setHours(0,0,0,0));
+        end = new Date(new Date().setHours(23,59,59,999));
+        results = await activityService.getAllActivityBetween(name,start,end);
+        res.send(results)
+    } catch(err){
+        res.send(err.message)
+    }
 }
