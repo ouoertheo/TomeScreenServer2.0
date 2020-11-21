@@ -15,7 +15,8 @@
     "jade": "~1.11.0",
     "mongoose": "^5.10.14",
     "morgan": "~1.9.1",
-    "node-cron": "^2.0.3"
+    "node-cron": "^2.0.3",
+    "node-windows": "^1.0.0-beta.5"
   },
   "devDependencies": {
     "nodemon": "^2.0.6"
